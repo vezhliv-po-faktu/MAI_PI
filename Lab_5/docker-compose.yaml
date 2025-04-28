@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14
+    container_name: postgres
+    restart: always
+    environment:
+    
+      POSTGRES_DB: social_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./init_postgres.sql:/docker-entrypoint-initdb.d/init_postgres.sql
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./init_messages.js:/docker-entrypoint-initdb.d/init_messages.js
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports: 
+      - 6379:6379
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+  app:
+    build:
+      context: .
+    container_name: app
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+      - mongo
+      - redis
+    volumes:
+      - .:/app
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
